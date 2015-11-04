@@ -97,12 +97,10 @@ func (m *Mesos) registerHost(s *registry.Service) {
 
 		if sliceEq(s.Tags, h.Tags) {
 			m.Registry.CacheMark(s.ID)
-
 			// Tags are the same. Return
 			return
 		}
 		log.Info("Tags changed. Re-registering")
-
 		// Delete cache entry. It will be re-created below
 		m.Registry.CacheDelete(s.ID)
 	}
