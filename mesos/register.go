@@ -3,6 +3,7 @@ package mesos
 import (
 	"fmt"
 	"strings"
+	"strconv"
 
 	"github.com/CiscoCloud/mesos-consul/registry"
 	"github.com/CiscoCloud/mesos-consul/state"
@@ -125,18 +126,39 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 			id := fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port)
 			log.Info("Registering agent's service: %s", id)
 
-			m.Registry.Register(&registry.Service{
-				ID:      id,
-				Name:    tname,
-				Port:    toPort(port),
-				Address: address,
-				Tags:    tags,
-				Check: GetCheck(t, &CheckVar{
-					Host: toIP(address),
-					Port: port,
-				}),
-				Agent: toIP(agent),
-			})
+			m.Registry.Register(
+				&registry.Service{
+					ID:      id,
+					Name:    tname,
+					Port:    toPort(port),
+					Address: address,
+					Tags:    tags,
+					Check: GetCheck(t, &CheckVar{
+						Host: toIP(address),
+						Port: port,
+					}),
+					Agent: toIP(agent),
+				})
+			for _, listener := range t.DiscoveryInfo.Ports.DiscoveryPorts {
+				id := fmt.Sprintf("mesos-consul:%s:%s:%s", agent, listener.Name, listener.Number)
+				log.Info("Registering agent's service listener: %s", id)
+
+				tag := []string{listener.Name}
+
+				m.Registry.Register(
+					&registry.Service{
+						ID:   id,
+						Name: tname,
+						Port: listener.Number,
+						Address: address,
+						Tags: tag,
+						Check: GetCheck(t, &CheckVar{
+							Host: toIP(address),
+							Port: strconv.Itoa(listener.Number),
+						}),
+						Agent: toIP(agent),
+					})
+			}
 		}
 	} else {
 		id := fmt.Sprintf("mesos-consul:%s-%s", agent, tname)
