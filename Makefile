@@ -18,20 +18,13 @@ build: deps
 	go build -o bin/$(NAME)
 
 test: deps
-	go test $(TEST) $(TESTARGS) -timeout=30s -parallel=4
+	go test $(TEST) $(TESTARGS) -timeout=30s -parallel=3
 	go vet $(TEST)
 
 xcompile: deps test
 	@rm -rf build/
 	@mkdir -p build
-	gox \
-		-os="darwin" \
-		-os="dragonfly" \
-		-os="freebsd" \
-		-os="linux" \
-		-os="openbsd" \
-		-os="solaris" \
-		-os="windows" \
+	gox -arch="amd64" -os="darwin linux windows" \
 		-output="build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile

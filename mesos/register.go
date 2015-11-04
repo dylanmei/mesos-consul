@@ -20,7 +20,6 @@ func (m *Mesos) LoadCache() error {
 	log.Debug("Populating cache from Consul")
 
 	mh := m.getLeader()
-
 	return m.Registry.CacheLoad(mh.Ip)
 }
 
@@ -49,9 +48,9 @@ func (m *Mesos) RegisterHosts(s state.State) {
 			},
 		})
 	}
-
 	// Register masters
 	mas := m.getMasters()
+
 	for _, ma := range mas {
 		var tags []string
 
@@ -72,7 +71,6 @@ func (m *Mesos) RegisterHosts(s state.State) {
 				Interval: "10s",
 			},
 		}
-
 		m.registerHost(s)
 	}
 }
@@ -83,13 +81,11 @@ func sliceEq(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}
-
 	for i := range a {
 		if a[i] != b[i] {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -104,13 +100,11 @@ func (m *Mesos) registerHost(s *registry.Service) {
 			// Tags are the same. Return
 			return
 		}
-
 		log.Info("Tags changed. Re-registering")
 
 		// Delete cache entry. It will be re-created below
 		m.Registry.CacheDelete(s.ID)
 	}
-
 	m.Registry.Register(s)
 }
 
@@ -118,7 +112,6 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 	var tags []string
 
 	tname := cleanName(t.Name)
-
 	address := t.IP(m.IpOrder...)
 
 	l := t.Label("tags")
@@ -127,11 +120,13 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 	} else {
 		tags = []string{}
 	}
-
 	if t.Resources.PortRanges != "" {
 		for _, port := range t.Resources.Ports() {
+			id := fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port)
+			log.Info("Registering agent's service: %s", id)
+
 			m.Registry.Register(&registry.Service{
-				ID:      fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port),
+				ID:      id,
 				Name:    tname,
 				Port:    toPort(port),
 				Address: address,
@@ -144,8 +139,11 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 			})
 		}
 	} else {
+		id := fmt.Sprintf("mesos-consul:%s-%s", agent, tname)
+		log.Info("Registering agent's service: %s", id)
+
 		m.Registry.Register(&registry.Service{
-			ID:      fmt.Sprintf("mesos-consul:%s-%s", agent, tname),
+			ID:      id,
 			Name:    tname,
 			Address: address,
 			Tags:    tags,
