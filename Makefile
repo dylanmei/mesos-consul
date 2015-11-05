@@ -18,13 +18,12 @@ build: deps
 	go build -o bin/$(NAME)
 
 test: deps
-	go test $(TEST) $(TESTARGS) -timeout=30s -parallel=3
+	go test $(TEST) $(TESTARGS) -timeout=30s -parallel=2
 	go vet $(TEST)
 
-xcompile: deps test
-	@rm -rf build/
+xcompile: clean deps test
 	@mkdir -p build
-	gox -arch="amd64" -os="darwin linux windows" \
+	gox -arch="amd64" -os="darwin linux" \
 		-output="build/{{.Dir}}_$(VERSION)_{{.OS}}_{{.Arch}}/$(NAME)"
 
 package: xcompile
@@ -35,4 +34,7 @@ package: xcompile
 		echo $$f; \
 	done
 
-.PHONY: all deps updatedeps build test xcompile package
+clean:
+	@rm -rf bin build
+
+.PHONY: all deps updatedeps build test xcompile package clean

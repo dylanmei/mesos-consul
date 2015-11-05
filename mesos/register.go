@@ -2,8 +2,8 @@ package mesos
 
 import (
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 
 	"github.com/CiscoCloud/mesos-consul/registry"
 	"github.com/CiscoCloud/mesos-consul/state"
@@ -42,7 +42,7 @@ func (m *Mesos) RegisterHosts(s state.State) {
 			Port:    port,
 			Address: agent,
 			Agent:   agent,
-			Tags:    []string{"agent", "follower" },
+			Tags:    []string{"agent", "follower"},
 			Check: &registry.Check{
 				HTTP:     fmt.Sprintf("http://%s:%d/slave(1)/health", agent, port),
 				Interval: "10s",
@@ -122,7 +122,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 	if t.Resources.PortRanges != "" {
 		for _, port := range t.Resources.Ports() {
 			id := fmt.Sprintf("mesos-consul:%s:%s:%s", agent, tname, port)
-			log.Info("Registering agent's service: %s", id)
+			log.Info(">>> registering agent's service: ", id)
 
 			m.Registry.Register(
 				&registry.Service{
@@ -138,18 +138,18 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 					Agent: toIP(agent),
 				})
 			for _, listener := range t.DiscoveryInfo.Ports.DiscoveryPorts {
-				id := fmt.Sprintf("mesos-consul:%s:%s:%s", agent, listener.Name, listener.Number)
-				log.Info("Registering agent's service listener: %s", id)
+				id := fmt.Sprintf("mesos-consul:%s:%s:%d", agent, listener.Name, listener.Number)
+				log.Info(">>> registering agent's service listener: ", id)
 
 				tag := []string{listener.Name}
 
 				m.Registry.Register(
 					&registry.Service{
-						ID:   id,
-						Name: tname,
-						Port: listener.Number,
+						ID:      id,
+						Name:    tname,
+						Port:    listener.Number,
 						Address: address,
-						Tags: tag,
+						Tags:    tag,
 						Check: GetCheck(t, &CheckVar{
 							Host: toIP(address),
 							Port: strconv.Itoa(listener.Number),
@@ -160,7 +160,7 @@ func (m *Mesos) registerTask(t *state.Task, agent string) {
 		}
 	} else {
 		id := fmt.Sprintf("mesos-consul:%s-%s", agent, tname)
-		log.Info("Registering agent's service: %s", id)
+		log.Info(">>> registering agent's service: ", id)
 
 		m.Registry.Register(&registry.Service{
 			ID:      id,
